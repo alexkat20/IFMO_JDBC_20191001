@@ -54,5 +54,5 @@ public class SqlQueries {
 
 
 
-
+    //something went wrong
 }
