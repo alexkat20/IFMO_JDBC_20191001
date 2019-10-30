@@ -2,19 +2,16 @@ package com.efimchick.ifmo.web.jdbc;
 
 import com.efimchick.ifmo.web.jdbc.domain.Employee;
 
-import java.sql.ResultSet;
+
 import com.efimchick.ifmo.web.jdbc.domain.FullName;
 import com.efimchick.ifmo.web.jdbc.domain.Position;
-import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ResultTreeType;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.*;
 import java.time.LocalDate;
-import java.util.Objects;
-import java.util.stream.Collectors;
+
 
 public class RowMapperFactory {
 
