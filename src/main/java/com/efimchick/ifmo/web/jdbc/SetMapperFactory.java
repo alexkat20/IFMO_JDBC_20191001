@@ -14,11 +14,11 @@ import java.time.LocalDate;
 import java.util.HashSet;
 
 
-public class SetMapperFactory {
+class SetMapperFactory {
 
-    public SetMapper<Set<Employee>> employeesSetMapper() {
-        SetMapper<Set<Employee>>  resultMap = resultSet -> {
-            Set<Employee> Employees = new HashSet<Employee>();
+    SetMapper<Set<Employee>> employeesSetMapper() {
+        return resultSet -> {
+            Set<Employee> Employees = new HashSet<>();
             try{
                 while (resultSet.next()){
                     Employee emp = mapRow(resultSet);
@@ -31,7 +31,6 @@ public class SetMapperFactory {
             }
             return Employees;
         };
-        return resultMap;
 
         //throw new UnsupportedOperationException();
     }
@@ -65,7 +64,8 @@ public class SetMapperFactory {
             //manager = mapRow(resultSet);
 
             if (resultSet.next() && !resultSet.getString("ID").equals(id)) {
-                do ;
+                do {
+                }
                 while (resultSet.next() && !resultSet.getString("ID").equals(id));
             }
             manager = mapRow(resultSet);
