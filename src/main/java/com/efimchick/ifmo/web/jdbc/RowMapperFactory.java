@@ -2,7 +2,6 @@ package com.efimchick.ifmo.web.jdbc;
 
 import com.efimchick.ifmo.web.jdbc.domain.Employee;
 
-
 import com.efimchick.ifmo.web.jdbc.domain.FullName;
 import com.efimchick.ifmo.web.jdbc.domain.Position;
 
