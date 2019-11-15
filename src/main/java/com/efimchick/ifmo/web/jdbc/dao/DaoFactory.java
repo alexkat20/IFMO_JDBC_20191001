@@ -39,8 +39,8 @@ public class DaoFactory {
 
     private List<Employee> getEmployees() throws SQLException{
         List<Employee> allEmployees = new ArrayList<>();
-
-        Connection connection = ConnectionSource.createConnection();
+        ConnectionSource source = ConnectionSource.instance();
+        Connection connection = source.createConnection();
         ResultSet resultset = connection.createStatement().executeQuery("select * from Employee");
         while (resultset.next()){
             Employee emp = EmployeeRowMapper(resultset);
@@ -51,7 +51,8 @@ public class DaoFactory {
 
     private List<Department> getDepartment() throws SQLException{
         List<Department> allDepartments = new ArrayList<>();
-        Connection connection = ConnectionSource.createConnection();
+        ConnectionSource source = ConnectionSource.instance();
+        Connection connection = source.createConnection();
         ResultSet resultset = connection.createStatement().executeQuery("select * from DEPARTMENT");
         while (resultset.next()){
             Department dep = new Department(new BigInteger(resultset.getString("ID")),
