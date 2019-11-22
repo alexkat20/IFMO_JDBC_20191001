@@ -131,12 +131,19 @@ public class DaoFactory {
         };
     }
 
-    public DepartmentDao departmentDAO() throws SQLException {
-        List<Department> departments = getDepartment();
+    public DepartmentDao departmentDAO()  {
+        List<Department> departments = null;
+        try {
+            departments = getDepartment();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        List<Department> finalDepartments = departments;
+        List<Department> finalDepartments1 = departments;
         return new DepartmentDao() {
             @Override
             public Optional<Department> getById(BigInteger Id) {
-                for (Department dep : departments){
+                for (Department dep : finalDepartments){
                     if (Objects.equals(dep.getId(), Id)){
                         return Optional.of(dep);
                     }
@@ -146,25 +153,25 @@ public class DaoFactory {
 
             @Override
             public List<Department> getAll() {
-                return departments;
+                return finalDepartments;
             }
 
             @Override
             public Department save(Department department) {
                 if (department != null){
-                    for (Department dep : departments){
+                    for (Department dep : finalDepartments){
                         if (Objects.equals(department.getId(), dep.getId())){
-                            departments.remove(dep);
+                            finalDepartments1.remove(dep);
                         }
                     }
-                    departments.add(department);
+                    finalDepartments.add(department);
                 }
                 return department;
             }
 
             @Override
             public void delete(Department department) {
-                departments.remove(department);
+                finalDepartments.remove(department);
             }
         };
     }
