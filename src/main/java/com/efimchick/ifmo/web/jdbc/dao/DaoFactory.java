@@ -143,6 +143,7 @@ public class DaoFactory {
         return new DepartmentDao() {
             @Override
             public Optional<Department> getById(BigInteger Id) {
+                assert finalDepartments != null;
                 for (Department dep : finalDepartments){
                     if (Objects.equals(dep.getId(), Id)){
                         return Optional.of(dep);
@@ -159,6 +160,7 @@ public class DaoFactory {
             @Override
             public Department save(Department department) {
                 if (department != null){
+                    assert finalDepartments != null;
                     for (Department dep : finalDepartments){
                         if (Objects.equals(department.getId(), dep.getId())){
                             finalDepartments1.remove(dep);
@@ -171,6 +173,7 @@ public class DaoFactory {
 
             @Override
             public void delete(Department department) {
+                assert finalDepartments != null;
                 finalDepartments.remove(department);
             }
         };
