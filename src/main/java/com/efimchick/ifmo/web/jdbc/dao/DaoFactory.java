@@ -69,6 +69,7 @@ public class DaoFactory {
 
     private List<Department> getDepartment(ResultSet resultset) throws SQLException{
         List<Department> allDepartments = new ArrayList<>();
+        resultset.absolute(0);
         while (resultset.next()){
             Department dep = new Department(new BigInteger(resultset.getString("ID")),
                     resultset.getString("NAME"), resultset.getString("LOCATION"));
@@ -111,20 +112,30 @@ public class DaoFactory {
             }
 
             @Override
-            public Optional<Employee> getById(BigInteger Id) throws SQLException {
+            public Optional<Employee> getById(BigInteger Id){
                 ResultSet resultset = getResultset("SELECT * FROM EMPLOYEE WHERE ID = " + Id);
                 assert resultset != null;
-                if (resultset.next()){
-                    return Optional.ofNullable(EmployeeRowMapper(resultset));
+                try {
+                    if (resultset.next()){
+                        return Optional.ofNullable(EmployeeRowMapper(resultset));
+                    }
+                    else return Optional.empty();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    return Optional.empty();
                 }
-                else return Optional.empty();
             }
 
             @Override
-            public List<Employee> getAll() throws SQLException {
+            public List<Employee> getAll() {
                 ResultSet resultset = getResultset("SELECT * FROM EMPLOYEE");
                 assert resultset != null;
-                return getEmployees(resultset);
+                try {
+                    return getEmployees(resultset);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    return null;
+                }
             }
 
             @Override
@@ -154,35 +165,53 @@ public class DaoFactory {
     public DepartmentDao departmentDAO()  {
         return new DepartmentDao() {
             @Override
-            public Optional<Department> getById(BigInteger Id) throws SQLException {
-                ResultSet resultset = getResultset("SELECT * FROM DEPARTMENT WHERE ID = " + Id);
-                assert resultset != null;
-                if (resultset.next()){
-                    return Optional.of(getDepartment(resultset).get(0));
-                }
-                else{
+            public Optional<Department> getById(BigInteger Id) {
+                try {
+                    ResultSet resultset = getResultset("SELECT * FROM DEPARTMENT WHERE ID = " + Id);
+                    //System.out.println(getDepartment(resultset).get(0));
+                    if (resultset.next()){
+                        return Optional.of(getDepartment(resultset).get(0));
+                    }
+                    else{
+                        return Optional.empty();
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
                     return Optional.empty();
                 }
             }
 
             @Override
-            public List<Department> getAll() throws SQLException {
+            public List<Department> getAll() {
                 ResultSet resultset = getResultset("SELECT * FROM DEPARTMENT");
                 assert resultset != null;
-                return getDepartment(resultset);
+                try {
+                    return getDepartment(resultset);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    return null;
+                }
             }
 
             @Override
-            public Department save(Department department) throws SQLException {
-                if (getById(department.getId()).equals(Optional.empty())) {
-                    Refresh("INSERT INTO department VALUES (" +
-                            department.getId() + " , '" +
-                            department.getName() + "' , '" +
-                            department.getLocation() + "')");
-                } else {
-                    Refresh("UPDATE department SET ID = " + department.getId() + " , NAME = '"
-                            + department.getName() + "' , LOCATION = '" + department.getLocation() +
-                            "' WHERE id = " + department.getId());
+            public Department save(Department department) {
+                ResultSet resultset = getResultset("SELECT * FROM DEPARTMENT WHERE ID = " + department.getId());
+                try {
+                    assert resultset != null;
+                    if (resultset.next()) {
+                        Refresh("UPDATE department SET NAME = " +
+                                "'" + department.getName() +
+                                "', LOCATION = '" + department.getLocation() +
+                                "' WHERE ID = '" + department.getId() + "'");
+                    } else {
+                        Refresh("INSERT INTO department VALUES" +
+                                "('" + department.getId() +
+                                "','" + department.getName() +
+                                "','" + department.getLocation() + "')");
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    return null;
                 }
                 return department;
             }
