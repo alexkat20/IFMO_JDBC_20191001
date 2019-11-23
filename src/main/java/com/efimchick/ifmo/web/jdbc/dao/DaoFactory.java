@@ -14,11 +14,32 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 
 public class DaoFactory {
+        private ResultSet getResultset(String sql){
+            try {
+                ConnectionSource source = ConnectionSource.instance();
+                Connection connection = source.createConnection();
+                return connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE).executeQuery(sql);
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        private void  Refresh(String sql){
+            try {
+                ConnectionSource source = ConnectionSource.instance();
+                Connection connection = source.createConnection();
+                connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE).executeUpdate(sql);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+
         private Employee EmployeeRowMapper(ResultSet resultset){
             try{
 
@@ -37,11 +58,8 @@ public class DaoFactory {
             }
     }
 
-    private List<Employee> getEmployees() throws SQLException{
+    private List<Employee> getEmployees(ResultSet resultset) throws SQLException{
         List<Employee> allEmployees = new ArrayList<>();
-        ConnectionSource source = ConnectionSource.instance();
-        Connection connection = source.createConnection();
-        ResultSet resultset = connection.createStatement().executeQuery("select * from Employee");
         while (resultset.next()){
             Employee emp = EmployeeRowMapper(resultset);
             allEmployees.add(emp);
@@ -49,11 +67,8 @@ public class DaoFactory {
         return allEmployees;
     }
 
-    private List<Department> getDepartment() throws SQLException{
+    private List<Department> getDepartment(ResultSet resultset) throws SQLException{
         List<Department> allDepartments = new ArrayList<>();
-        ConnectionSource source = ConnectionSource.instance();
-        Connection connection = source.createConnection();
-        ResultSet resultset = connection.createStatement().executeQuery("select * from DEPARTMENT");
         while (resultset.next()){
             Department dep = new Department(new BigInteger(resultset.getString("ID")),
                     resultset.getString("NAME"), resultset.getString("LOCATION"));
@@ -66,115 +81,115 @@ public class DaoFactory {
 
 
 
-    public EmployeeDao employeeDAO() throws SQLException{
-        List<Employee> employees = getEmployees();
+    public EmployeeDao employeeDAO(){
 
         return new EmployeeDao() {
             @Override
             public List<Employee> getByDepartment(Department department) {
-                List<Employee> deps = new ArrayList<>();
-                for(Employee emp : employees){
-
-                    if (Objects.equals(emp.getDepartmentId(), department.getId())){
-                        deps.add(emp);
-                    }
+                ResultSet resultset = getResultset("SELECT * FROM EMPLOYEE WHERE DEPARTMENT = " + department.getId());
+                assert resultset != null;
+                try {
+                    return getEmployees(resultset);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    return null;
                 }
-                return deps;
+
             }
 
             @Override
             public List<Employee> getByManager(Employee employee) {
-                List<Employee> managers = new ArrayList<>();
-                for (Employee emp : employees){
-                    if(Objects.equals(emp.getManagerId(), employee.getId())){
-                        managers.add(emp);
-                    }
+                ResultSet resultset = getResultset("SELECT * FROM EMPLOYEE WHERE MANAGER = " + employee.getId());
+                assert resultset != null;
+                try {
+                    return getEmployees(resultset);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    return null;
                 }
 
-                return managers;
             }
 
             @Override
-            public Optional<Employee> getById(BigInteger Id) {
-                for (Employee emp : employees){
-                    if (Objects.equals(emp.getId(), Id)){
-                        return Optional.of(emp);
-                    }
+            public Optional<Employee> getById(BigInteger Id) throws SQLException {
+                ResultSet resultset = getResultset("SELECT * FROM EMPLOYEE WHERE ID = " + Id);
+                assert resultset != null;
+                if (resultset.next()){
+                    return Optional.ofNullable(EmployeeRowMapper(resultset));
                 }
-                return Optional.empty();
+                else return Optional.empty();
             }
 
             @Override
-            public List<Employee> getAll() {
-                return employees;
+            public List<Employee> getAll() throws SQLException {
+                ResultSet resultset = getResultset("SELECT * FROM EMPLOYEE");
+                assert resultset != null;
+                return getEmployees(resultset);
             }
 
             @Override
             public Employee save(Employee employee) {
-                if (employee != null){
-                    for (Employee emp : employees){
-                        if (Objects.equals(emp.getId(), employee.getId())){
-                            employees.remove(emp);
-                        }
-                    }
-                    employees.add(employee);
-                }
+                Refresh("INSERT INTO employee VALUES" +
+                        "('" + employee.getId() +
+                        "','" + employee.getFullName().getFirstName() +
+                        "','" + employee.getFullName().getLastName() +
+                        "','" + employee.getFullName().getMiddleName() +
+                        "','" + employee.getPosition() +
+                        "','" + employee.getManagerId() +
+                        "','" + employee.getHired() +
+                        "','" + employee.getSalary() +
+                        "','" + employee.getDepartmentId() +
+                        "')"
+                );
                 return employee;
             }
 
             @Override
             public void delete(Employee employee) {
-                if (employee != null){
-                    employees.remove(employee);
-                }
+                Refresh("DELETE FROM employee WHERE ID = " + employee.getId());
             }
         };
     }
 
     public DepartmentDao departmentDAO()  {
-        List<Department> departments = null;
-        try {
-            departments = getDepartment();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        List<Department> finalDepartments = departments;
-        List<Department> finalDepartments1 = departments;
         return new DepartmentDao() {
             @Override
-            public Optional<Department> getById(BigInteger Id) {
-                assert finalDepartments != null;
-                for (Department dep : finalDepartments){
-                    if (Objects.equals(dep.getId(), Id)){
-                        return Optional.of(dep);
-                    }
+            public Optional<Department> getById(BigInteger Id) throws SQLException {
+                ResultSet resultset = getResultset("SELECT * FROM DEPARTMENT WHERE ID = " + Id);
+                assert resultset != null;
+                if (resultset.next()){
+                    return Optional.of(getDepartment(resultset).get(0));
                 }
-                return Optional.empty();
+                else{
+                    return Optional.empty();
+                }
             }
 
             @Override
-            public List<Department> getAll() {
-                return finalDepartments;
+            public List<Department> getAll() throws SQLException {
+                ResultSet resultset = getResultset("SELECT * FROM DEPARTMENT");
+                assert resultset != null;
+                return getDepartment(resultset);
             }
 
             @Override
-            public Department save(Department department) {
-                if (department != null){
-                    assert finalDepartments != null;
-                    for (Department dep : finalDepartments){
-                        if (Objects.equals(department.getId(), dep.getId())){
-                            finalDepartments1.remove(dep);
-                        }
-                    }
-                    finalDepartments.add(department);
+            public Department save(Department department) throws SQLException {
+                if (getById(department.getId()).equals(Optional.empty())) {
+                    Refresh("INSERT INTO department VALUES (" +
+                            department.getId() + " , '" +
+                            department.getName() + "' , '" +
+                            department.getLocation() + "')");
+                } else {
+                    Refresh("UPDATE department SET ID = " + department.getId() + " , NAME = '"
+                            + department.getName() + "' , LOCATION = '" + department.getLocation() +
+                            "' WHERE id = " + department.getId());
                 }
                 return department;
             }
 
             @Override
             public void delete(Department department) {
-                assert finalDepartments != null;
-                finalDepartments.remove(department);
+                Refresh("DELETE FROM department WHERE ID = " + department.getId());
             }
         };
     }
